@@ -64,6 +64,8 @@ To build CheckMate from source:
     cd bin
     ./CheckMATE 13tev_test.in
     ```
+      
+A more detailed installation guide can be found at:https://checkmate.hepforge.org/tutorial/ver2/start.php
      
 ## New features
 
