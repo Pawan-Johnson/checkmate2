@@ -16,108 +16,56 @@ void Atlas_2106_01676::initialize() {
 
 void Atlas_2106_01676::analyze() {
 
-  // ===============================================================================================================
-  // Baseline Selection
+  //missingET->addMuons(muonsCombined);  // Adds muons to missing ET. This should almost always be done which is why this line is not commented out. Probably not since 3.4.2
   
-  auto baselineElectrons = filterPhaseSpace(electronsLoose, 4.5, -2.47, 2.47);
-  auto baselineMuons = filterPhaseSpace(muonsCombined, 3., -2.5, 2.5);
-  auto baselineLeptons = baselineElectrons + baselineMuons;
-  // TODO: How to avoid puleup xinustion z0sint < 0.5
-  // TODO: Identification vs isolation ctiteria
-  auto baselineJets = filterPhaseSpace(jets, 30, -4.5, 4.5);
-  // TODO: Photon with tight identification criteria
-
-  // ==============================================================================================================
-  // Ovelap Removal
-  // TODO: Remove electrons and muons sharing ID Track
-  baselineElectrons = overlapRemoval(baselineElectrons, baselineMuons, 0.1); //! Remove ID overlap
-  baselineJets = overlapRemoval(baselineJets, baselineElectrons, 0.2, "eta");
-  baselineJets = overlapRemoval(baselineJets, baselineMuons, 0.4, "eta"); //! Three track assosiation
-  baselineElectrons = overlapRemoval(baselineElectrons, baselineJets, 0.4, "eta");
-  baselineMuons = overlapRemoval(baselineMuons, baselineJets, 0.4, "eta");
-
-  // ================================================================================================================
-  // Missing ET
-  missingET->addMuons(baselineMuons); //! Is it computed with the new baseline electrons and jets defined previously?
-  auto missingpT = missingET->P4().Perp();
-  // auto ETmisssig = missingpT / ( sigma_L*sqrt(1 - rho_LT*rho_LT)) //! Find def of sigmaL and rhoLT
-
-  // ================================================================================================================
-  // Signal Objects
-  auto signalJets = filterPhaseSpace(baselineJets, 30, -2.8, 2.8); //! Loose Quality Criteria? JVT120?
-  //! bjets selection
-  auto signalElectrons = baselineElectrons; //! transverse impact parameter?
-  auto signalMuons = baselineMuons; //! transverse impact parameter?
-  auto singnalLeptons = signalElectrons + signalMuons;
-
-  // TODO: FNP coorections to leptons
-
-  // =================================================================================================================
-  // Scale Eff between simulation snad data
-  vector < vector<double> > pt_edges;
-  vector <double> effs;
-  /*
-  Doubts
-  * Why loop over true particles instead of baseline?
-  * Shouldn't I just do this for events with three baseline leptons with the low pt lepton?
-  * Isn't this specific to off shell? In which case either this goes into the off shell presel or should I keep two copies of signal electrons?
-  */
-  for ( int i = 0; i < true_particles.size(); i++)
-  {
-    if (abs(true_particles[t]->PID == 11) and true_particles[t]->Status == 1)
-    { // Is final state electron.
-      double pt = true_particles[t]->PT;
-      
-      // Baseline selection
-      if pt <4.5 continue;
-      if true_particles[i]->Eta > 2.47 continue;
-
-      double eff = rand()/RAND_MAX + 1.;
+  pTmiss = missingET->P4();
   
-      for (int i = 0; i < effs.size(); i++)
-      {
-        if (pt > pt_edges[i][0] and pt < pt_edges[i][1])
-        {
-          if (eff < effs[i]) 
-          {
-            // TODO: Select This Electon
-          }
-          
+  electrons_off.clear();
+  muons_off.clear();
+  electrons_off = filterPhaseSpace(electronsMedium, 8., -2.47, 2.47); 
+  muons_off = filterPhaseSpace(muonsCombined, 8., -2.5, 2.5);    
+  std::vector<Electron*> electrons_signal = electrons_off;
+  std::vector<Muon*> muons_signal = muons_off; 
+  
+  
+
+  int nel_true = 0; int nmu_true = 0;
+  for (int t = 0; t < true_particles.size(); t++ ) {
+    if ( abs(true_particles[t]->PID) == 11 and true_particles[t]->Status == 1 ) {
+        double eff1 = rand()/(RAND_MAX + 1.);
+        double pt = true_particles[t]->PT;
+        if ( pt >  4.5) nel_true++;
+        for (int i = 0; i < electrons_off.size(); i++)
+            if ( electrons_off[i]->Particle == true_particles[t] ) break;
+        if (eff1 < ( (pt > 4.5)*(pt < 5.0)*0.1 + (pt > 5)*(pt < 6.0)*0.19 + (pt > 6)*(pt < 8.0)*0.27 ) and fabs(true_particles[t]->Eta) < 2.47) {
+              Electron ele = Electron();
+              ele.PT = pt;
+              ele.Phi = true_particles[t]->Phi;
+              ele.Eta = true_particles[t]->Eta;
+              ele.P4() = true_particles[t]->P4();
+              ele.Particle = true_particles[t];
+              ele.Charge = true_particles[t]->Charge;
+              electrons_off.push_back(&ele);
         }
-      }
     }
-    else if (abs(true_particles[t]->PID == 13) and true_particles[t]->Status == 1)
-    {
-      // Is a final state muon
-      double pt = true_particles[t]->PT;
-
-      //Baseline Conditions
-      if pt < 3. continue;  
-      if true_particles[i]->Eta > 2.5 continue;
-
-      double eff = rand()/RAND_MAX + 1.;
-
-      for (int i = 0; i < effs.size(); i++)
-      {
-        if (pt > pt_edges[i][0] and pt < pt_edges[i][1])
-        {
-          if (eff < effs[i]) 
-          {
-            // TODO: Select This Muon
-          }
+    if ( abs(true_particles[t]->PID) == 13 and true_particles[t]->Status == 1 ) {
+        double eff1 = rand()/(RAND_MAX + 1.);
+        double pt = true_particles[t]->PT;
+        if ( pt >  3.) nmu_true++;
+        for (int i = 0; i < muons_off.size(); i++)
+            if ( muons_off[i]->Particle == true_particles[t] ) break;
+        if (eff1 < ((pt > 3.0)*(pt < 4.0)*0.18 + (pt > 4.0)*(pt < 5.0)*0.32 + (pt > 5.0)*(pt < 6.0)*0.43 + (pt > 6.0)*(pt < 8.0)*0.47 ) and fabs(true_particles[t]->Eta) < 2.5 ) {
+              Muon muo = Muon();
+              muo.PT = pt;
+              muo.Phi = true_particles[t]->Phi;
+              muo.Eta = true_particles[t]->Eta;
+              muo.P4() = true_particles[t]->P4();
+              muo.Particle = true_particles[t];
+              muo.Charge = true_particles[t]->Charge;
+              muons_off.push_back(&muo);
         }
-      }
     }
-     
   }
-  
-
-  // =================================================================================================================
-  // Preselction Cuts
-
-
-
-
   
   truemet = TLorentzVector(0.,0.,0.,0.);
   /*int nlsp = 0;
