@@ -16,7 +16,7 @@ void Atlas_2106_01676::initialize() {
 
 void Atlas_2106_01676::analyze() {
 
-  //missingET->addMuons(muonsCombined);  // Adds muons to missing ET. This should almost always be done which is why this line is not commented out. Probably not since 3.4.2
+  missingET->addMuons(muonsCombined);  // Adds muons to missing ET. This should almost always be done which is why this line is not commented out. Probably not since 3.4.2
   
   pTmiss = missingET->P4();
   
@@ -28,6 +28,16 @@ void Atlas_2106_01676::analyze() {
   std::vector<Muon*> muons_signal = muons_off; 
   
   int nel_true = 0; int nmu_true = 0;
+  vector<double> pt_edge1_muon = {3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 125, 150};
+  vector<double> pt_edge2_muon = {4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 125, 150, 200};
+  vector<double> eff_edge1_muon = {0.14, 0.28, 0.377, 0.432, 4.95, 0.547, 0.645, 0.679, 0.735, 0.78, 0.822, 0.852, 0.879, 0.895, 0.901, 0.907, 0.905};
+  vector<double> eff_edge2_muon = {0.203, 0.38, 0.492, 0.52, 0.57, 0.631, 0.706, 0.739, 0.795, 0.83, 0.86, 0.888, 0.911, 0.927, 0.935, 0.941, 0.937};
+
+  vector<double> pt_edge1_ele = {4.5, 5., 6., 8., 10., 12., 15., 20., 25., 30., 40., 50., 75., 100., 130., 150.};
+  vector<double> pt_edge2_ele = {5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 130, 150, 200};
+  vector<double> eff_edge1_ele = {0.08, 0.15, 0.248, 0.352, 0.411, 0.454, 0.511, 0.568, 0.615, 0.727, 0.692, 0.757, 0.813, 0.834, 0.85, 0.867};
+  vector<double> eff_edge2_ele = {0.13, 0.25, 0.326, 0.43, 0.469, 0.529, 0.57, 0.623, 0.672, 0.668, 0.743, 0.81, 0.861, 0.896, 0.906, 0.921};
+
   for (int t = 0; t < true_particles.size(); t++ ) {
     if ( abs(true_particles[t]->PID) == 11 and true_particles[t]->Status == 1 ) {
         double eff1 = rand()/(RAND_MAX + 1.);
@@ -35,16 +45,18 @@ void Atlas_2106_01676::analyze() {
         if ( pt >  4.5) nel_true++;
         for (int i = 0; i < electrons_off.size(); i++)
             if ( electrons_off[i]->Particle == true_particles[t] ) break;
-        if (eff1 < ( (pt > 4.5)*(pt < 5.0)*0.1 + (pt > 5)*(pt < 6.0)*0.19 + (pt > 6)*(pt < 8.0)*0.27 ) and fabs(true_particles[t]->Eta) < 2.47) {
-              Electron ele = Electron();
-              ele.PT = pt;
-              ele.Phi = true_particles[t]->Phi;
-              ele.Eta = true_particles[t]->Eta;
-              ele.P4() = true_particles[t]->P4();
-              ele.Particle = true_particles[t];
-              ele.Charge = true_particles[t]->Charge;
-              electrons_off.push_back(&ele);
-        }
+        for (int i=0; i < eff_edge1_ele.size(); i++)
+          if (pt > pt_edge1_ele[i] and pt< pt_edge2_ele[i])
+            if (eff1 < (eff_edge1_ele[i] + eff_edge1_ele[i])*0.5 and (true_particles[t]->Eta) < 2.47) {
+                  Electron ele = Electron();
+                  ele.PT = pt;
+                  ele.Phi = true_particles[t]->Phi;
+                  ele.Eta = true_particles[t]->Eta;
+                  ele.P4() = true_particles[t]->P4();
+                  ele.Particle = true_particles[t];
+                  ele.Charge = true_particles[t]->Charge;
+                  electrons_off.push_back(&ele);
+            }
     }
     if ( abs(true_particles[t]->PID) == 13 and true_particles[t]->Status == 1 ) {
         double eff1 = rand()/(RAND_MAX + 1.);
@@ -52,16 +64,18 @@ void Atlas_2106_01676::analyze() {
         if ( pt >  3.) nmu_true++;
         for (int i = 0; i < muons_off.size(); i++)
             if ( muons_off[i]->Particle == true_particles[t] ) break;
-        if (eff1 < ((pt > 3.0)*(pt < 4.0)*0.18 + (pt > 4.0)*(pt < 5.0)*0.32 + (pt > 5.0)*(pt < 6.0)*0.43 + (pt > 6.0)*(pt < 8.0)*0.47 ) and fabs(true_particles[t]->Eta) < 2.5 ) {
-              Muon muo = Muon();
-              muo.PT = pt;
-              muo.Phi = true_particles[t]->Phi;
-              muo.Eta = true_particles[t]->Eta;
-              muo.P4() = true_particles[t]->P4();
-              muo.Particle = true_particles[t];
-              muo.Charge = true_particles[t]->Charge;
-              muons_off.push_back(&muo);
-        }
+        for(int i=0; i< eff_edge1_muon.size(); i++)
+          if (pt > pt_edge1_muon[i] and pt< pt_edge2_muon[i])
+            if (eff1 < (eff_edge1_muon[i] + eff_edge2_muon[i] )/2 and fabs(true_particles[t]->Eta) < 2.5 ) {
+                  Muon muo = Muon();
+                  muo.PT = pt;
+                  muo.Phi = true_particles[t]->Phi;
+                  muo.Eta = true_particles[t]->Eta;
+                  muo.P4() = true_particles[t]->P4();
+                  muo.Particle = true_particles[t];
+                  muo.Charge = true_particles[t]->Charge;
+                  muons_off.push_back(&muo);
+            }
     }
   }
   
@@ -343,6 +357,68 @@ void Atlas_2106_01676::analyze() {
 void Atlas_2106_01676::finalize() {
   // Whatever should be done after the run goes here
 }       
+
+void Atlas_2106_01676::MCCorrections()
+{
+
+  vector<Electron *> passed_electrons;
+  vector<Muon *> passed_muons;
+  /*
+  Doubts
+  * Why loop over true particles instead of baseline?
+  */
+  for (int t = 0; t < true_particles.size(); t++)
+  {
+    if (abs(true_particles[t]->PID == 11) and true_particles[t]->Status == 1)
+    { // Is final state electron.
+
+      double pt = true_particles[t]->PT;
+      double eff = rand() / RAND_MAX + 1.;
+
+      for (int i = 0; i < eff_edge1_ele.size(); i++)
+      {
+        if (pt > pt_edge1_ele[i] and pt < pt_edge2_ele[i])
+        {
+          if (eff < (eff_edge1_ele[i] + eff_edge2_ele[i]) / 2)
+          {
+            Electron ele = Electron();
+            ele.PT = pt;
+            ele.Phi = true_particles[t]->Phi;
+            ele.Eta = true_particles[t]->Eta;
+            ele.P4() = true_particles[t]->P4();
+            ele.Particle = true_particles[t];
+            ele.Charge = true_particles[t]->Charge;
+            passed_electrons.push_back(&ele);
+          }
+        }
+      }
+    }
+    else if (abs(true_particles[t]->PID == 13) and true_particles[t]->Status == 1)
+    { // Is a final state muon
+
+      double pt = true_particles[t]->PT;
+      double eff = rand() / RAND_MAX + 1.;
+
+      for (int i = 0; i < eff_edge1_muon.size(); i++)
+      {
+        if (pt > pt_edge1_muon[i] and pt < pt_edge2_muon[i])
+        {
+          if (eff < (eff_edge1_muon[i] + eff_edge2_muon[i]) / 2)
+          {
+            Muon muo = Muon();
+            muo.PT = pt;
+            muo.Phi = true_particles[t]->Phi;
+            muo.Eta = true_particles[t]->Eta;
+            muo.P4() = true_particles[t]->P4();
+            muo.Particle = true_particles[t];
+            muo.Charge = true_particles[t]->Charge;
+            muons_off.push_back(&muo);
+          }
+        }
+      }
+    }
+  }
+}
 
 bool Atlas_2106_01676::sortByPTEl(Electron *i, Electron *j) { return (i->PT > j->PT); }
 bool Atlas_2106_01676::sortByPTMu(Muon *i, Muon *j) { return (i->PT > j->PT); }
