@@ -62,7 +62,7 @@ void Atlas_2106_01676::analyze()
   // Missing ET
   missingET->addMuons(baselineMuons); //! Is it computed with the new baseline electrons and jets defined previously? Test both
   pTmiss = missingET->P4();
-  double met = missingET->P4().Perp();
+  // double met = missingET->P4().Perp();
   // auto ETmisssig = missingpT / ( sigma_L*sqrt(1 - rho_LT*rho_LT)) //! Find def of sigmaL and rhoLT
 
   // ================================================================================================================
@@ -76,7 +76,7 @@ void Atlas_2106_01676::analyze()
 
   // =================================================================================================================
   // Scale Eff between simulation snad data
-  MCCorrections();
+  // MCCorrections();
 
   countCutflowEvent("00_all");
 
@@ -106,7 +106,7 @@ void Atlas_2106_01676::analyze()
     signalLeptons.push_back(lep);
   }
   std::sort(signalLeptons.begin(), signalLeptons.end(), sortByPT);
-  std::sort(baselineLeptons, begin(), baselineLeptons.end(), sortByPT);
+  std::sort(baselineLeptons.begin(), baselineLeptons.end(), sortByPT);
 
   // b veto
   bveto = false;
@@ -128,12 +128,13 @@ void Atlas_2106_01676::analyze()
     mll = (signalElectrons[0]->P4() + signalElectrons[1]->P4()).M();
   }
   else if (signalMuons.size() == 2 and signalMuons[0]->Charge * signalMuons[1]->Charge < 0)
-  {  
+  {
     SFOS = true;
     mll = (signalMuons[0]->P4() + signalMuons[1]->P4()).M();
   }
 
   // HT
+  // ! Feature: SumObjectsPt function.
   HT = 0.;
   for (int i = 0; i < jets_off.size(); i++)
     HT += jets_off[i]->PT;
@@ -206,7 +207,7 @@ void Atlas_2106_01676::analyze()
     else if (jets_off.size() > 0 and HT < 200.)
     {
       countCutflowEvent("onWZ_29_njHThigh");
-      if (leptons[0]->PT + leptons[1]->PT + leptons[2]->PT < 350.)
+      if (signalLeptons[0]->PT + signalLeptons[1]->PT + signalLeptons[2]->PT < 350.)
       {
         countCutflowEvent("onWZ_30_njHTlep");
         if (mt > 100.)
@@ -268,57 +269,68 @@ std::vector<Jet *> Atlas_2106_01676::overlapRemovalJetMuonAndTracks(std::vector<
 
 void Atlas_2106_01676::MCCorrections()
 {
-  vector<vector<double>> pt_edges;
-  vector<double> effs;
+  vector<double> pt_edge1_muon = {3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 125, 150};
+  vector<double> pt_edge2_muon = {4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 125, 150, 200};
+  vector<double> eff_edge1_muon = {0.14, 0.28, 0.377, 0.432, 4.95, 0.547, 0.645, 0.679, 0.735, 0.78, 0.822, 0.852, 0.879, 0.895, 0.901, 0.907, 0.905};
+  vector<double> eff_edge2_muon = {0.203, 0.38, 0.492, 0.52, 0.57, 0.631, 0.706, 0.739, 0.795, 0.83, 0.86, 0.888, 0.911, 0.927, 0.935, 0.941, 0.937};
+
+  vector<double> pt_edge1_ele = {4.5, 5., 6., 8., 10., 12., 15., 20., 25., 30., 40., 50., 75., 100., 130., 150.};
+  vector<double> pt_edge2_ele = {5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 130, 150, 200};
+  vector<double> eff_edge1_ele = {0.08, 0.15, 0.248, 0.352, 0.411, 0.454, 0.511, 0.568, 0.615, 0.727, 0.692, 0.757, 0.813, 0.834, 0.85, 0.867};
+  vector<double> eff_edge2_ele = {0.13, 0.25, 0.326, 0.43, 0.469, 0.529, 0.57, 0.623, 0.672, 0.668, 0.743, 0.81, 0.861, 0.896, 0.906, 0.921};
+
+  vector<Electron *> passed_electrons;
+  vector<Muon *> passed_muons;
   /*
   Doubts
   * Why loop over true particles instead of baseline?
   */
-  for (int i = 0; i < true_particles.size(); i++)
+  for (int t = 0; t < true_particles.size(); t++)
   {
     if (abs(true_particles[t]->PID == 11) and true_particles[t]->Status == 1)
     { // Is final state electron.
+
       double pt = true_particles[t]->PT;
-
-      // Baseline selection
-      if pt
-        < 4.5 continue;
-      if true_particles
-        [i] -> Eta > 2.47 continue;
-
       double eff = rand() / RAND_MAX + 1.;
 
-      for (int i = 0; i < effs.size(); i++)
+      for (int i = 0; i < eff_edge1_ele.size(); i++)
       {
-        if (pt > pt_edges[i][0] and pt < pt_edges[i][1])
+        if (pt > pt_edge1_ele[i] and pt < pt_edge2_ele[i])
         {
-          if (eff < effs[i])
+          if (eff < (eff_edge1_ele[i] + eff_edge2_ele[i]) / 2)
           {
-            // TODO: Select This Electon
+            Electron ele = Electron();
+            ele.PT = pt;
+            ele.Phi = true_particles[t]->Phi;
+            ele.Eta = true_particles[t]->Eta;
+            ele.P4() = true_particles[t]->P4();
+            ele.Particle = true_particles[t];
+            ele.Charge = true_particles[t]->Charge;
+            passed_electrons.push_back(&ele);
           }
         }
       }
     }
     else if (abs(true_particles[t]->PID == 13) and true_particles[t]->Status == 1)
-    {
-      // Is a final state muon
+    { // Is a final state muon
+
       double pt = true_particles[t]->PT;
-
-      // Baseline Conditions
-      if pt
-        < 3. continue;
-      if true_particles
-        [i] -> Eta > 2.5 continue;
-
       double eff = rand() / RAND_MAX + 1.;
 
-      for (int i = 0; i < effs.size(); i++)
+      for (int i = 0; i < eff_edge1_muon.size(); i++)
       {
-        if (pt > pt_edges[i][0] and pt < pt_edges[i][1])
+        if (pt > pt_edge1_muon[i] and pt < pt_edge2_muon[i])
         {
-          if (eff < effs[i])
+          if (eff < (eff_edge1_muon[i] + eff_edge2_muon[i]) / 2)
           {
-            // TODO: Select This Muon
+            Muon muo = Muon();
+            muo.PT = pt;
+            muo.Phi = true_particles[t]->Phi;
+            muo.Eta = true_particles[t]->Eta;
+            muo.P4() = true_particles[t]->P4();
+            muo.Particle = true_particles[t];
+            muo.Charge = true_particles[t]->Charge;
+            muons_off.push_back(&muo);
           }
         }
       }
@@ -367,33 +379,11 @@ bool Atlas_2106_01676::preselection_onWZ(bool cutflow)
     return false;
   if (cutflow)
     countCutflowEvent("onWZ_07_onZ");
-  
-  if (fabs((leptons[0]->P4() + leptons[1]->P4() + leptons[2]->P4()).M() - 91.2) < 15.)
+
+  if (fabs((signalLeptons[0]->P4() + signalLeptons[1]->P4() + signalLeptons[2]->P4()).M() - 91.2) < 15.)
     return false;
   if (cutflow)
     countCutflowEvent("onWZ_08_Zveto");
 
-  
-}
-
-
-{
-  // Setup mt2 evaluation object with top quarks. Modfified from AnalysisBase
-  mt2_bisect::mt2 mt2_event;
-  TLorentzVector zeroVector = TLorentzVector(0., 0., 0., 0.);
-  // If no invis is given, use missingET. Note that pmiss[0] is irrelvant, which is why we set it to -1.
-  double pmiss[] = {-1, missingET->P4().Px(), missingET->P4().Py()};
-  if (invis != zeroVector)
-  {
-    pmiss[0] = -1;
-    pmiss[1] = invis.Px();
-    pmiss[2] = invis.Py();
-  }
-
-  // Construct arrays that mt2_bisect needs as input and start evaluation
-  double p1[3] = {0.0, vis1.Px(), vis1.Py()};
-  double p2[3] = {0.0, vis2.Px(), vis2.Py()};
-  mt2_event.set_momenta(p1, p2, pmiss);
-  mt2_event.set_mn(m_inv);
-  return mt2_event.get_mt2();
+  return true;
 }
