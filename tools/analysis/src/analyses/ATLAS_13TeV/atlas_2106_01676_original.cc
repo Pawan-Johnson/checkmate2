@@ -106,15 +106,8 @@ void Atlas_2106_01676::analyze() {
   muons_signal = Isolate_leptons_with_inverse_track_isolation_cone(muons_signal,  tracks, towers, 0.3, 10., 0.2, 0.06, 0.06, false);  
   
   double met = missingET->P4().Perp();
+
   
-  trigger = false;
-  if (electrons_off.size() > 1 and electrons_off[1]->PT > 18.) trigger = true;
-  else if (muons_off.size() and muons_off[0]->PT > 27.3) trigger = true;
-  else if (muons_off.size() > 1 and muons_off[1]->PT > 14.7) trigger = true;
-  else if (muons_off.size() > 2 and muons_off[2]->PT > 6.5) trigger = true;
-  else if ( met > 200. ) trigger = true;
-  
-  countCutflowEvent("00_all");
   
   if (electrons_off.size() + muons_off.size() != 3) return;
   countCutflowEvent("01_3leptons");

@@ -14,16 +14,25 @@ class Atlas_2106_01676 : public AnalysisBase {
     void finalize();
 
   private:
+    std::vector<Electron*> baselineElectrons, signalElectrons;
+    std::vector<Muon*> baselineMuons, signalMuons;
+    std::vector<FinalStateObject*> baselineLeptons, signalLeptons;
+    std::vector<Jet*> baselineJets, signalJets;
+
+
     TLorentzVector pair;
     TLorentzVector pTmiss;
     TLorentzVector truemet;
+
+    bool trigger, bveto, SFOS; 
+    double mllmin, HT, mllmax, drmin, mll;
+
+    
+
     FinalStateObject* lepton3;
     std::vector<Muon*> muons_off;
     std::vector<Electron*> electrons_off;
-    std::vector<FinalStateObject*> leptons;
     std::vector<Jet*> jets_off, jets_signal;
-    double mllmin, HT, mllmax, drmin;
-    bool trigger, bveto, SFOS; 
     static bool sortByPTEl(Electron *i, Electron *j);
     static bool sortByPTMu(Muon *i, Muon *j);
     bool check_nTrack_jet(Jet* jet, std::vector<Track*> tracks, int nTracksMin) ;    

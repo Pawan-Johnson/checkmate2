@@ -233,7 +233,7 @@ DEPDIR = .deps
 DLLTOOL = false
 DSYMUTIL = 
 DUMPBIN = 
-DYLD_LIBRARY_PATH = /home/pawan/HEPTools/ROOT/install/lib:/home/pawan/HEPTools/ROOT/install/lib
+DYLD_LIBRARY_PATH = /home/pawan/HEPTools/ROOT/install/lib:/home/pawan/HEPTools/ROOT/install/lib:/home/pawan/HEPTools/ROOT/install/lib
 ECHO_C = 
 ECHO_N = -n
 ECHO_T = 
@@ -254,10 +254,10 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LD = /usr/bin/ld -m elf_x86_64
 LDFLAGS = 
-LD_LIBRARY_PATH = /home/pawan/HEPTools/ROOT/install/lib:/home/pawan/HEPTools/ROOT/install/lib
+LD_LIBRARY_PATH = /home/pawan/HEPTools/ROOT/install/lib:/home/pawan/HEPTools/ROOT/install/lib:/home/pawan/HEPTools/ROOT/install/lib
 # TODO: Check if these are still needed, they were originally introduced
 #       to easily compile Delphes
-LD_RUN_PATH = :/home/pawan/HEPTools/ROOT/install/lib
+LD_RUN_PATH = :/home/pawan/HEPTools/ROOT/install/lib:/home/pawan/HEPTools/ROOT/install/lib
 LIBOBJS = 
 LIBS =  -L/home/pawan/HEPTools/HepMC/HepMC-2.06.11/lib -lHepMCfio -lHepMC -L/home/pawan/HEPTools/PYTHIA/pythia8245/lib -lpythia8 -ldl -lm -lz -L/home/pawan/HEPTools/DELPHES/delphes -L/home/pawan/HEPTools/ROOT/install/lib -lGui -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -lROOTDataFrame -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -lROOTDataFrame -lEG -lDelphes
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
