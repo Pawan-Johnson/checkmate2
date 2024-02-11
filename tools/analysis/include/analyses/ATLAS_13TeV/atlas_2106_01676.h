@@ -28,7 +28,7 @@ class Atlas_2106_01676 : public AnalysisBase {
     static bool sortByPTMu(Muon *i, Muon *j);
     bool check_nTrack_jet(Jet* jet, std::vector<Track*> tracks, int nTracksMin) ;    
     std::vector<Jet*> overlapRemoval_muon_jet_tracks(std::vector<Jet*> cand_jets, std::vector<Muon*> cand_muons, double deltaR, int nTracks);  
-    void Atlas_2106_01676::MCCorrections()
+    void MCCorrections()
     bool preselection_offWZ(bool cutflow);
     bool preselection_onWZ(bool cutflow);
     bool preselection_Wh(bool cutflow);
